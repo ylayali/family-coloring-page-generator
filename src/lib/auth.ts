@@ -117,7 +117,7 @@ export async function getUserById(id: string): Promise<User | null> {
   }
 }
 
-export async function useCredit(userId: string): Promise<boolean> {
+export async function deductCredit(userId: string): Promise<boolean> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
   })

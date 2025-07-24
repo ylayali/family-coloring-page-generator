@@ -169,11 +169,11 @@ export function ColoringPageForm({
         onSubmit(formData);
     };
 
-    const displayFileNames = (files: File[]) => {
-        if (files.length === 0) return 'No photos selected';
-        if (files.length === 1) return files[0].name;
-        return `${files.length} photos selected`;
-    };
+    // const displayFileNames = (files: File[]) => {
+    //     if (files.length === 0) return 'No photos selected';
+    //     if (files.length === 1) return files[0].name;
+    //     return `${files.length} photos selected`;
+    // };
 
     return (
         <Card className='flex h-full w-full flex-col overflow-hidden rounded-lg border border-white/10 bg-black'>

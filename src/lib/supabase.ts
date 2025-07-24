@@ -88,7 +88,7 @@ export function getImageUrl(filename: string): string {
 }
 
 // List all images in the bucket (for admin purposes)
-export async function listImages(): Promise<{ files: any[]; error?: string }> {
+export async function listImages(): Promise<{ files: unknown[]; error?: string }> {
   try {
     const { data, error } = await supabaseAdmin.storage
       .from(STORAGE_BUCKET)

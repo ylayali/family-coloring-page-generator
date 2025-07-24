@@ -429,7 +429,6 @@ export default function HomePage() {
         }
 
         try {
-            let blob: Blob | undefined;
             let mimeType: string = 'image/png';
 
             // With Supabase Storage, fetch image from API endpoint
@@ -437,7 +436,7 @@ export default function HomePage() {
             if (!response.ok) {
                 throw new Error(`Failed to fetch image: ${response.statusText}`);
             }
-            blob = await response.blob();
+            const blob = await response.blob();
             mimeType = response.headers.get('Content-Type') || mimeType;
 
             if (!blob) {

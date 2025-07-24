@@ -11,7 +11,7 @@ import * as React from 'react';
 type AuthFormProps = {
   mode: 'login' | 'signup';
   onToggleMode: () => void;
-  onSuccess: (user: any) => void;
+  onSuccess: (user: { id: string; email: string; name?: string; creditsRemaining: number; isTrialActive: boolean }) => void;
 };
 
 export function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProps) {

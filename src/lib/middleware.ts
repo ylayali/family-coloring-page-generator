@@ -25,7 +25,7 @@ export async function getAuthenticatedUser(request: NextRequest) {
   }
 }
 
-export function requireAuth(handler: (request: NextRequest, user: any) => Promise<Response>) {
+export function requireAuth(handler: (request: NextRequest, user: { id: string; email: string; creditsRemaining: number }) => Promise<Response>) {
   return async (request: NextRequest) => {
     const user = await getAuthenticatedUser(request)
     

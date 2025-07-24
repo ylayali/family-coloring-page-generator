@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getAuthenticatedUser } from '@/lib/middleware';
-import { useCredit, checkTrialExpiry } from '@/lib/auth';
+import { deductCredit, checkTrialExpiry } from '@/lib/auth';
 import { uploadImage } from '@/lib/supabase';
 
 const openai = new OpenAI({
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Use a credit for successful generation
-        const creditUsed = await useCredit(user.id);
+        const creditUsed = await deductCredit(user.id);
         if (!creditUsed) {
             console.error('Failed to deduct credit after successful generation');
             // Still continue with the response since the image was generated
