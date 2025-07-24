@@ -4,7 +4,7 @@ import { getAuthenticatedUser } from '@/lib/middleware';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { filename: string } }
+    { params }: { params: Promise<{ filename: string }> }
 ) {
     console.log('Received GET request to /api/image/[filename]');
 
@@ -14,7 +14,7 @@ export async function GET(
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const { filename } = params;
+    const { filename } = await params;
 
     if (!filename) {
         return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
