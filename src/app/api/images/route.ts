@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Failed to retrieve image data from API.' }, { status: 500 });
         }
 
-        // Use a credit for successful generation
+        // Deduct a credit for successful generation
         const creditUsed = await deductCredit(user.id);
         if (!creditUsed) {
             console.error('Failed to deduct credit after successful generation');
