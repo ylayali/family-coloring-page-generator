@@ -1,23 +1,26 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.SUPABASE_URL!
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
-}
+// Check if Supabase is configured
+const isSupabaseConfigured = supabaseUrl && supabaseAnonKey && supabaseServiceRoleKey
 
-// Client for browser/public operations
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Client for browser/public operations (only if configured)
+export const supabase = isSupabaseConfigured 
+  ? createClient(supabaseUrl!, supabaseAnonKey!)
+  : null
 
-// Admin client for server-side operations (has elevated permissions)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
+// Admin client for server-side operations (only if configured)
+export const supabaseAdmin = isSupabaseConfigured
+  ? createClient(supabaseUrl!, supabaseServiceRoleKey!, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : null
 
 // Storage bucket name for generated images
 export const STORAGE_BUCKET = 'coloring-pages'
@@ -28,6 +31,10 @@ export async function uploadImage(
   imageBuffer: Buffer, 
   contentType: string = 'image/png'
 ): Promise<{ publicUrl: string; error?: string }> {
+  if (!supabaseAdmin) {
+    return { publicUrl: '', error: 'Supabase not configured' }
+  }
+
   try {
     const { data, error } = await supabaseAdmin.storage
       .from(STORAGE_BUCKET)
@@ -58,6 +65,10 @@ export async function uploadImage(
 
 // Delete image from Supabase Storage
 export async function deleteImage(filename: string): Promise<{ success: boolean; error?: string }> {
+  if (!supabaseAdmin) {
+    return { success: false, error: 'Supabase not configured' }
+  }
+
   try {
     const { error } = await supabaseAdmin.storage
       .from(STORAGE_BUCKET)
@@ -80,6 +91,10 @@ export async function deleteImage(filename: string): Promise<{ success: boolean;
 
 // Get public URL for an image
 export function getImageUrl(filename: string): string {
+  if (!supabaseAdmin) {
+    return ''
+  }
+
   const { data: { publicUrl } } = supabaseAdmin.storage
     .from(STORAGE_BUCKET)
     .getPublicUrl(filename)
@@ -89,6 +104,10 @@ export function getImageUrl(filename: string): string {
 
 // List all images in the bucket (for admin purposes)
 export async function listImages(): Promise<{ files: unknown[]; error?: string }> {
+  if (!supabaseAdmin) {
+    return { files: [], error: 'Supabase not configured' }
+  }
+
   try {
     const { data, error } = await supabaseAdmin.storage
       .from(STORAGE_BUCKET)
