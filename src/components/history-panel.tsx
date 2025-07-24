@@ -179,7 +179,7 @@ export function HistoryPanel({
                             const isMultiImage = imageCount > 1;
                             const itemKey = item.timestamp;
                             const originalStorageMode = item.storageModeUsed || 'fs';
-                            const outputFormat = item.output_format || 'png';
+                            const outputFormat = 'png'; // Default format for display
 
                             let thumbnailUrl: string | undefined;
                             if (firstImage) {
@@ -214,14 +214,10 @@ export function HistoryPanel({
                                             <div
                                                 className={cn(
                                                     'pointer-events-none absolute top-1 left-1 z-10 flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] text-white',
-                                                    item.mode === 'edit' ? 'bg-orange-600/80' : 'bg-blue-600/80'
+                                                    'bg-blue-600/80'
                                                 )}>
-                                                {item.mode === 'edit' ? (
-                                                    <Pencil size={12} />
-                                                ) : (
-                                                    <SparklesIcon size={12} />
-                                                )}
-                                                {item.mode === 'edit' ? 'Edit' : 'Create'}
+                                                <SparklesIcon size={12} />
+                                                Coloring Page
                                             </div>
                                             {isMultiImage && (
                                                 <div className='pointer-events-none absolute right-1 bottom-1 z-10 flex items-center gap-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[12px] text-white'>
@@ -238,12 +234,10 @@ export function HistoryPanel({
                                                     )}
                                                     <span>{originalStorageMode === 'fs' ? 'file' : 'db'}</span>
                                                 </div>
-                                                {item.output_format && (
-                                                    <div className='flex items-center gap-1 rounded-full border border-white/10 bg-neutral-900/80 px-1 py-0.5 text-[11px] text-white/70'>
-                                                        <FileImage size={12} className='text-neutral-400' />
-                                                        <span>{outputFormat.toUpperCase()}</span>
-                                                    </div>
-                                                )}
+                                                <div className='flex items-center gap-1 rounded-full border border-white/10 bg-neutral-900/80 px-1 py-0.5 text-[11px] text-white/70'>
+                                                    <FileImage size={12} className='text-neutral-400' />
+                                                    <span>{outputFormat.toUpperCase()}</span>
+                                                </div>
                                             </div>
                                         </button>
                                         {item.costDetails && (
@@ -346,13 +340,13 @@ export function HistoryPanel({
                                             {formatDuration(item.durationMs)}
                                         </p>
                                         <p>
-                                            <span className='font-medium text-white/80'>Quality:</span> {item.quality}
+                                            <span className='font-medium text-white/80'>Size:</span> {item.size || '1024x1536'}
                                         </p>
                                         <p>
-                                            <span className='font-medium text-white/80'>BG:</span> {item.background}
+                                            <span className='font-medium text-white/80'>Theme:</span> {item.theme || 'garden'}
                                         </p>
                                         <p>
-                                            <span className='font-medium text-white/80'>Mod:</span> {item.moderation}
+                                            <span className='font-medium text-white/80'>Names:</span> {item.names || 'none'}
                                         </p>
                                         <div className='mt-2 flex items-center gap-1'>
                                             <Dialog
