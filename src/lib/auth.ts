@@ -62,10 +62,11 @@ export async function createUser(email: string, password: string, name?: string)
     trialStartDate: user.trialStartDate || undefined,
     subscriptionPlan: user.subscriptionPlan || undefined,
     subscriptionStatus: user.subscriptionStatus || undefined,
-    stripeCustomerId: user.stripeCustomerId || undefined,
-    subscriptionId: user.subscriptionId || undefined,
-    currentPeriodEnd: user.currentPeriodEnd || undefined,
-    currentPeriodStart: user.currentPeriodStart || undefined,
+    // TODO: Add Stripe fields once Prisma schema is updated
+    // stripeCustomerId: user.stripeCustomerId || undefined,
+    // subscriptionId: user.subscriptionId || undefined,
+    // currentPeriodEnd: user.currentPeriodEnd || undefined,
+    // currentPeriodStart: user.currentPeriodStart || undefined,
   }
 }
 
@@ -87,10 +88,11 @@ export async function authenticateUser(email: string, password: string): Promise
     trialStartDate: user.trialStartDate || undefined,
     subscriptionPlan: user.subscriptionPlan || undefined,
     subscriptionStatus: user.subscriptionStatus || undefined,
-    stripeCustomerId: user.stripeCustomerId || undefined,
-    subscriptionId: user.subscriptionId || undefined,
-    currentPeriodEnd: user.currentPeriodEnd || undefined,
-    currentPeriodStart: user.currentPeriodStart || undefined,
+    // TODO: Add Stripe fields once Prisma schema is updated
+    // stripeCustomerId: user.stripeCustomerId || undefined,
+    // subscriptionId: user.subscriptionId || undefined,
+    // currentPeriodEnd: user.currentPeriodEnd || undefined,
+    // currentPeriodStart: user.currentPeriodStart || undefined,
   }
 }
 
@@ -110,10 +112,11 @@ export async function getUserById(id: string): Promise<User | null> {
     trialStartDate: user.trialStartDate || undefined,
     subscriptionPlan: user.subscriptionPlan || undefined,
     subscriptionStatus: user.subscriptionStatus || undefined,
-    stripeCustomerId: user.stripeCustomerId || undefined,
-    subscriptionId: user.subscriptionId || undefined,
-    currentPeriodEnd: user.currentPeriodEnd || undefined,
-    currentPeriodStart: user.currentPeriodStart || undefined,
+    // TODO: Add Stripe fields once Prisma schema is updated
+    // stripeCustomerId: user.stripeCustomerId || undefined,
+    // subscriptionId: user.subscriptionId || undefined,
+    // currentPeriodEnd: user.currentPeriodEnd || undefined,
+    // currentPeriodStart: user.currentPeriodStart || undefined,
   }
 }
 
