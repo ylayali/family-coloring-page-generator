@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getAuthenticatedUser } from '@/lib/middleware';
 import { useCredit, checkTrialExpiry } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
 import { uploadImage } from '@/lib/supabase';
 
 const openai = new OpenAI({

@@ -4,13 +4,12 @@ import { AuthForm } from '@/components/auth-form';
 import { ColoringPageForm, type ColoringPageFormData } from '@/components/coloring-page-form';
 import { HistoryPanel } from '@/components/history-panel';
 import { ImageOutput } from '@/components/image-output';
-import { SubscriptionPlans } from '@/components/subscription-plans';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { calculateApiCost, type CostDetails } from '@/lib/cost-utils';
 import { db, type ImageRecord } from '@/lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { LogOut, User, CreditCard, ArrowLeft } from 'lucide-react';
+import { LogOut, User, CreditCard } from 'lucide-react';
 import * as React from 'react';
 
 type HistoryImage = {
@@ -230,11 +229,11 @@ export default function HomePage() {
         }
     };
 
-    const getMimeTypeFromFormat = (format: string): string => {
-        if (format === 'jpeg') return 'image/jpeg';
-        if (format === 'webp') return 'image/webp';
-        return 'image/png';
-    };
+    // const getMimeTypeFromFormat = (format: string): string => {
+    //     if (format === 'jpeg') return 'image/jpeg';
+    //     if (format === 'webp') return 'image/webp';
+    //     return 'image/png';
+    // };
 
     const handleApiCall = async (formData: ColoringPageFormData) => {
         if (!user) {
@@ -587,7 +586,7 @@ export default function HomePage() {
                     <Alert className='border-orange-500/50 bg-orange-900/20 text-orange-300'>
                         <AlertTitle className='text-orange-200'>No Credits Remaining</AlertTitle>
                         <AlertDescription>
-                            You've used all your credits. Please upgrade your plan to continue creating coloring pages.
+                            You&apos;ve used all your credits. Please upgrade your plan to continue creating coloring pages.
                         </AlertDescription>
                     </Alert>
                 )}

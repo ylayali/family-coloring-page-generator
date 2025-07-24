@@ -99,7 +99,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     return
   }
 
-  const [planKey, planData] = plan
+  const [planKey] = plan
 
   // Find user by Stripe customer ID
   const user = await prisma.user.findUnique({

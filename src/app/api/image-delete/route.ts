@@ -1,11 +1,6 @@
-import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteImage } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/middleware';
-
-function sha256(data: string): string {
-    return crypto.createHash('sha256').update(data).digest('hex');
-}
 
 type DeleteRequestBody = {
     filenames: string[];
