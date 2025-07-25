@@ -54,16 +54,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the coloring page prompt
-    const coloringPagePrompt = `Transform the uploaded family photos into a beautiful coloring page design. ${prompt}. 
+    const coloringPagePrompt = `Transform the uploaded photos into a beautiful coloring page design. ${prompt}. 
 
 Create a clean line art drawing suitable for coloring with:
 - Clear, bold outlines
 - No filled areas or shading
-- Simple, child-friendly design
+- A simple, friendly design
 - All elements should be outlined only, ready for coloring
 - Combine all the people/subjects from the photos into a single cohesive coloring page scene
 
-The result should look like a professional coloring book page with clean black lines on white background.`;
+The result should look like a professional coloring book page with clean black lines on a white background.`;
 
     console.log('Generating coloring page with prompt:', coloringPagePrompt);
 
