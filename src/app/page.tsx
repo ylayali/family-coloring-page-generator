@@ -1,15 +1,12 @@
 'use client';
 
-import { AuthForm } from '@/components/auth-form';
 import { ColoringPageForm, type ColoringPageFormData } from '@/components/coloring-page-form';
 import { HistoryPanel } from '@/components/history-panel';
 import { ImageOutput } from '@/components/image-output';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { calculateApiCost, type CostDetails } from '@/lib/cost-utils';
 import { db, type ImageRecord } from '@/lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { LogOut, User, CreditCard } from 'lucide-react';
 import * as React from 'react';
 
 type HistoryImage = {
@@ -31,20 +28,10 @@ export type HistoryMetadata = {
     size?: '1024x1536' | '1536x1024';
 };
 
-type User = {
-    id: string;
-    email: string;
-    name?: string;
-    creditsRemaining: number;
-    isTrialActive: boolean;
-    subscriptionPlan?: string;
-    subscriptionStatus?: string;
-};
-
 const MAX_EDIT_IMAGES = 10;
 
-        // Using Supabase Storage for all image handling
-        const effectiveStorageModeClient = 'supabase';
+// Using filesystem storage for simplicity
+const effectiveStorageModeClient = 'fs';
 
 type ApiImageResponseItem = {
     filename: string;
@@ -54,9 +41,6 @@ type ApiImageResponseItem = {
 };
 
 export default function HomePage() {
-    const [user, setUser] = React.useState<User | null>(null);
-    const [isAuthLoading, setIsAuthLoading] = React.useState(true);
-    const [authMode, setAuthMode] = React.useState<'login' | 'signup'>('signup');
     const [isLoading, setIsLoading] = React.useState(false);
     const [isSendingToEdit, setIsSendingToEdit] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
@@ -73,25 +57,6 @@ export default function HomePage() {
 
     const [imageFiles, setImageFiles] = React.useState<File[]>([]);
     const [sourceImagePreviewUrls, setSourceImagePreviewUrls] = React.useState<string[]>([]);
-
-    // Check authentication status on mount
-    React.useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const response = await fetch('/api/auth/me');
-                if (response.ok) {
-                    const data = await response.json();
-                    setUser(data.user);
-                }
-            } catch (error) {
-                console.error('Auth check failed:', error);
-            } finally {
-                setIsAuthLoading(false);
-            }
-        };
-
-        checkAuth();
-    }, []);
 
     const getImageSrc = React.useCallback(
         (filename: string): string | undefined => {
@@ -127,35 +92,33 @@ export default function HomePage() {
     }, [sourceImagePreviewUrls]);
 
     React.useEffect(() => {
-        if (!user) return;
-        
         try {
-            const storedHistory = localStorage.getItem(`openaiImageHistory_${user.id}`);
+            const storedHistory = localStorage.getItem('openaiImageHistory');
             if (storedHistory) {
                 const parsedHistory: HistoryMetadata[] = JSON.parse(storedHistory);
                 if (Array.isArray(parsedHistory)) {
                     setHistory(parsedHistory);
                 } else {
                     console.warn('Invalid history data found in localStorage.');
-                    localStorage.removeItem(`openaiImageHistory_${user.id}`);
+                    localStorage.removeItem('openaiImageHistory');
                 }
             }
         } catch (e) {
             console.error('Failed to load or parse history from localStorage:', e);
-            localStorage.removeItem(`openaiImageHistory_${user.id}`);
+            localStorage.removeItem('openaiImageHistory');
         }
         setIsInitialLoad(false);
-    }, [user]);
+    }, []);
 
     React.useEffect(() => {
-        if (!isInitialLoad && user) {
+        if (!isInitialLoad) {
             try {
-                localStorage.setItem(`openaiImageHistory_${user.id}`, JSON.stringify(history));
+                localStorage.setItem('openaiImageHistory', JSON.stringify(history));
             } catch (e) {
                 console.error('Failed to save history to localStorage:', e);
             }
         }
-    }, [history, isInitialLoad, user]);
+    }, [history, isInitialLoad]);
 
     React.useEffect(() => {
         const storedPref = localStorage.getItem('imageGenSkipDeleteConfirm');
@@ -172,7 +135,7 @@ export default function HomePage() {
 
     React.useEffect(() => {
         const handlePaste = (event: ClipboardEvent) => {
-            if (!event.clipboardData || !user) {
+            if (!event.clipboardData) {
                 return;
             }
 
@@ -209,43 +172,9 @@ export default function HomePage() {
         return () => {
             window.removeEventListener('paste', handlePaste);
         };
-    }, [imageFiles.length, user]);
-
-    const handleAuthSuccess = (userData: User) => {
-        setUser(userData);
-        setError(null);
-    };
-
-    const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            setUser(null);
-            setHistory([]);
-            setLatestImageBatch(null);
-            setImageFiles([]);
-            setSourceImagePreviewUrls([]);
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
-    };
-
-    // const getMimeTypeFromFormat = (format: string): string => {
-    //     if (format === 'jpeg') return 'image/jpeg';
-    //     if (format === 'webp') return 'image/webp';
-    //     return 'image/png';
-    // };
+    }, [imageFiles.length]);
 
     const handleApiCall = async (formData: ColoringPageFormData) => {
-        if (!user) {
-            setError('Please log in to create coloring pages');
-            return;
-        }
-
-        if (user.creditsRemaining <= 0) {
-            setError('No credits remaining. Please upgrade your plan to continue.');
-            return;
-        }
-
         const startTime = Date.now();
         let durationMs = 0;
 
@@ -274,33 +203,11 @@ export default function HomePage() {
             const result = await response.json();
 
             if (!response.ok) {
-                if (response.status === 401) {
-                    setError('Please log in to continue');
-                    setUser(null);
-                    return;
-                }
-                if (response.status === 403) {
-                    setError('No credits remaining. Please upgrade your plan to continue.');
-                    // Refresh user data to get updated credit count
-                    const userResponse = await fetch('/api/auth/me');
-                    if (userResponse.ok) {
-                        const userData = await userResponse.json();
-                        setUser(userData.user);
-                    }
-                    return;
-                }
                 throw new Error(result.error || `API request failed with status ${response.status}`);
             }
 
             if (result.images && result.images.length > 0) {
                 durationMs = Date.now() - startTime;
-                
-                // Refresh user data to get updated credit count
-                const userResponse = await fetch('/api/auth/me');
-                if (userResponse.ok) {
-                    const userData = await userResponse.json();
-                    setUser(userData.user);
-                }
 
                 const costDetails = calculateApiCost(result.usage);
 
@@ -320,15 +227,13 @@ export default function HomePage() {
                     size: formData.size
                 };
 
-                // With Supabase Storage, images are already uploaded and we get public URLs
+                // Process images - using filesystem storage
                 const newImageBatchPromises = result.images
-                    .filter((img: ApiImageResponseItem) => !!img.path)
-                    .map((img: ApiImageResponseItem) =>
-                        Promise.resolve({
-                            path: img.path!,
-                            filename: img.filename
-                        })
-                    );
+                    .filter((img: ApiImageResponseItem) => !!img.filename)
+                    .map(async (img: ApiImageResponseItem) => {
+                        // Filesystem mode - images are saved on server
+                        return { path: `/api/image/${img.filename}`, filename: img.filename };
+                    });
 
                 const processedImages = (await Promise.all(newImageBatchPromises)).filter(Boolean) as {
                     path: string;
@@ -398,12 +303,13 @@ export default function HomePage() {
             setError(null);
 
             try {
-                if (user) {
-                    localStorage.removeItem(`openaiImageHistory_${user.id}`);
-                }
+                localStorage.removeItem('openaiImageHistory');
 
-                // No need to clear local storage for Supabase mode
-                // Images are stored in Supabase Storage
+                // Clear IndexedDB if used
+                if (allDbImages && allDbImages.length > 0) {
+                    await db.images.clear();
+                    setBlobUrlCache({});
+                }
             } catch (e) {
                 console.error('Failed during history clearing:', e);
                 setError(`Failed to clear history: ${e instanceof Error ? e.message : String(e)}`);
@@ -431,7 +337,7 @@ export default function HomePage() {
         try {
             let mimeType: string = 'image/png';
 
-            // With Supabase Storage, fetch image from API endpoint
+            // Fetch image from API endpoint
             const response = await fetch(`/api/image/${filename}`);
             if (!response.ok) {
                 throw new Error(`Failed to fetch image: ${response.statusText}`);
@@ -517,78 +423,14 @@ export default function HomePage() {
         setItemToDeleteConfirm(null);
     };
 
-    if (isAuthLoading) {
-        return (
-            <main className='flex min-h-screen items-center justify-center bg-black text-white'>
-                <div className='text-center'>
-                    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4'></div>
-                    <p>Loading...</p>
-                </div>
-            </main>
-        );
-    }
-
-    if (!user) {
-        return (
-            <main className='flex min-h-screen items-center justify-center bg-black text-white p-4'>
-                <div className='w-full max-w-md'>
-                    <div className='text-center mb-8'>
-                        <h1 className='text-3xl font-bold mb-2'>Coloring Page Creator</h1>
-                        <p className='text-white/60'>Transform your family photos into beautiful coloring pages</p>
-                    </div>
-                    <AuthForm
-                        mode={authMode}
-                        onToggleMode={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                        onSuccess={handleAuthSuccess}
-                    />
-                </div>
-            </main>
-        );
-    }
-
     return (
         <main className='flex min-h-screen flex-col items-center bg-black p-4 text-white md:p-8 lg:p-12'>
             <div className='w-full max-w-7xl space-y-6'>
-                {/* Header with user info */}
-                <div className='flex items-center justify-between border-b border-white/10 pb-4'>
-                    <div>
-                        <h1 className='text-2xl font-bold'>Coloring Page Creator</h1>
-                        <p className='text-white/60'>Transform your family photos into coloring pages</p>
-                    </div>
-                    <div className='flex items-center gap-4'>
-                        <div className='flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2'>
-                            <CreditCard className='h-4 w-4' />
-                            <span className='font-medium'>
-                                {user.creditsRemaining} credit{user.creditsRemaining !== 1 ? 's' : ''} remaining
-                            </span>
-                            {user.isTrialActive && (
-                                <span className='text-xs bg-blue-600 px-2 py-1 rounded'>Trial</span>
-                            )}
-                        </div>
-                        <div className='flex items-center gap-2 text-white/60'>
-                            <User className='h-4 w-4' />
-                            <span>{user.name || user.email}</span>
-                        </div>
-                        <Button
-                            variant='ghost'
-                            size='sm'
-                            onClick={handleLogout}
-                            className='text-white/60 hover:text-white hover:bg-white/10'
-                        >
-                            <LogOut className='h-4 w-4 mr-2' />
-                            Logout
-                        </Button>
-                    </div>
+                {/* Header */}
+                <div className='text-center border-b border-white/10 pb-6'>
+                    <h1 className='text-3xl font-bold mb-2'>Family Coloring Page Creator</h1>
+                    <p className='text-white/60'>Transform your family photos into beautiful coloring pages using AI</p>
                 </div>
-
-                {user.creditsRemaining <= 0 && (
-                    <Alert className='border-orange-500/50 bg-orange-900/20 text-orange-300'>
-                        <AlertTitle className='text-orange-200'>No Credits Remaining</AlertTitle>
-                        <AlertDescription>
-                            You&apos;ve used all your credits. Please upgrade your plan to continue creating coloring pages.
-                        </AlertDescription>
-                    </Alert>
-                )}
 
                 <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
                     <div className='relative flex h-[70vh] min-h-[600px] flex-col lg:col-span-1'>

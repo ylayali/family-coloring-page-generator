@@ -1,42 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getImageUrl } from '@/lib/supabase';
-import { getAuthenticatedUser } from '@/lib/middleware';
+import fs from 'fs';
+import path from 'path';
+
+const GENERATED_IMAGES_DIR = path.join(process.cwd(), 'generated-images');
 
 export async function GET(
-    request: NextRequest,
-    { params }: { params: Promise<{ filename: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ filename: string }> }
 ) {
-    console.log('Received GET request to /api/image/[filename]');
-
-    // Check authentication
-    const user = await getAuthenticatedUser(request);
-    if (!user) {
-        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
+  try {
     const { filename } = await params;
-
+    
     if (!filename) {
-        return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
     }
 
-    // Ensure user can only access their own images
-    if (!filename.startsWith(`${user.id}/`)) {
-        console.warn(`User ${user.id} attempted to access file not owned by them: ${filename}`);
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    // Security: Only allow alphanumeric characters, hyphens, and dots
+    if (!/^[a-zA-Z0-9\-_.]+$/.test(filename)) {
+      return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
     }
 
-    try {
-        // Get the public URL from Supabase
-        const publicUrl = getImageUrl(filename);
-        
-        // Redirect to the Supabase public URL
-        return NextResponse.redirect(publicUrl);
-    } catch (error: unknown) {
-        console.error(`Error serving image ${filename}:`, error);
-        return NextResponse.json(
-            { error: 'Failed to serve image' },
-            { status: 500 }
-        );
+    const filepath = path.join(GENERATED_IMAGES_DIR, filename);
+
+    // Check if file exists
+    if (!fs.existsSync(filepath)) {
+      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
+
+    // Read the file
+    const imageBuffer = fs.readFileSync(filepath);
+    
+    // Determine content type based on file extension
+    const ext = path.extname(filename).toLowerCase();
+    let contentType = 'image/png'; // default
+    
+    switch (ext) {
+      case '.jpg':
+      case '.jpeg':
+        contentType = 'image/jpeg';
+        break;
+      case '.png':
+        contentType = 'image/png';
+        break;
+      case '.webp':
+        contentType = 'image/webp';
+        break;
+      case '.gif':
+        contentType = 'image/gif';
+        break;
+    }
+
+    // Return the image with appropriate headers
+    return new NextResponse(imageBuffer, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
+      },
+    });
+
+  } catch (error) {
+    console.error('Error serving image:', error);
+    return NextResponse.json(
+      { error: 'Failed to serve image' },
+      { status: 500 }
+    );
+  }
 }
